@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<script src='https://d3js.org/d3.v5.min.js'></script>
+<script src="https://rawgit.com/susielu/d3-annotation/master/d3-annotation.min.js"></script>
+<head>
+    <title>CS 416 Final Project</title>
+    <meta charset="utf-8">
+    <link rel="stylesheet" href="slideshow.css" media="screen">
+</head>
+<body onload="init()">
+  <header>
+    <h1>Exploration of Market Share and Fuel Efficiency by Engine Type</h1>
+
+  </header>
+  <nav role="navigation">
+  <ul>
+    <li><a href="index.html"><b>1</b> Introduction</a></li>
+    <li><a href="slide1.html"><b>2</b> Distribution of Fuel Types</a></li>
+    <li><a href="slide2.html"><b>3</b> Distribution of Cylinders</a></li>
+    <li><a href="slide3.html"><b>4</b> Comparison of MPG</a></li>
+   </ul>
+ </nav>
+  
+<main>
+    <h2>Comparison of MPG</h2>
+    <p> <br> </p>
+    <aside>When plotting city versus highway MPG, it is easy to see the 
+      outsized performance in fuel efficiency from electric vehicles.  Since 
+      electric vehicles still comprise a relatively small market share, there 
+      exists opportunity to for dramatic improvement in overall fuel efficiency 
+      if electric vehicles become more widely adopted.  
+    </aside>
+    <svg width=500 height=500></svg>
+    <script>
+    //<style> circle {fill: lightblue; stroke: gray;} </style>
+
+    async function init() {
+    const data = await d3.csv('https://flunky.github.io/cars2017.csv');
+    var margin = 50;
+    var width = 400;
+    var height = 400;
+    
+    console.log(data);
+
+    // axis
+    var xScale = d3.scaleLog().domain([10,150]).range([0,400]);
+    var yScale = d3.scaleLog().domain([10,150]).range([400,0]);
+
+    // Y Axiss
+    d3.select('svg')
+      .append('g')
+      .attr('transform', 'translate('+margin+','+margin+')')
+      .call(d3.axisLeft(yScale).tickValues([10,20,50,100]).tickFormat(d3.format("~s")));
+    
+
+    d3.select('svg')
+      .append("text")
+      .attr("transform", "rotate(-90)")
+      .attr("x", -(500/2))
+      .attr("y", 15)
+      .style("text-anchor", "middle")
+      .text("Average Highway MPG");
+
+    // X axis 
+    d3.select('svg')
+      .append('text')
+      .attr('x', 250)
+      .attr('y', 490 )
+      .style("text-anchor", "middle")
+      .text("Average City MPG");
+
+    d3.select('svg')
+      .append('g')
+      .attr('transform', 'translate('+margin+','+(400+margin)+')')
+      .call(d3.axisBottom(xScale).tickValues([10,20,50,100]).tickFormat(d3.format("~s")));
+    
+    // Annotation Text
+    const annotations = [
+      {
+        note:{
+          label: 'Electric vehicles are a clear improvement over gas or diesel in terms of MPG performance '
+        },
+        x: 420,
+        y: 130,
+        dx: -40,
+        dy: 150
+      }
+     ];
+      // Div for tooltip
+     var div = d3.select('main').append('div')	
+                .attr("class", "tooltip")				
+                .style("opacity", 0);
+
+    //d3.select('body')
+    d3.select('svg')
+      .append('g')
+      .attr('transform', 'translate('+margin+','+margin+')')
+      .selectAll('circle')
+      .data(data)
+      .enter()
+      .append('circle')
+      .attr('cx', function(d) {return xScale(d.AverageCityMPG) })
+      .attr('cy', function(d) {return yScale(d.AverageHighwayMPG) })
+      .attr('r', function(d){return 4 })
+      .style('fill', '#f768a1')
+      .style('fill-opacity', '0.6')
+      .style('stroke', '#f768a1')
+      .on('mouseover', function (d, i){
+          div.transition()
+             .duration(100)
+             .style('opacity', 1); 
+          div.html('<b>Make: </b>' + d.Make + '<br>' +
+                   '<b>Fuel Type: </b>' + d.Fuel + '<br>' + 
+                   '<b>Cylinders: </b>' + d.EngineCylinders + '<br>' +
+                   '<b>Avg. Highway MPG: </b>' + d.AverageHighwayMPG + '<br>' +
+                   '<b>Avg. City MPG: </b>' + d.AverageCityMPG)
+             .style('left', (d3.event.pageX + 10) + 'px')
+             .style('top', (d3.event.pageY - 15) + 'px');
+
+      })
+      .on('mouseout', function (d, i){
+        div.transition()
+        .duration(100)
+        .style('opacity', 0);
+      });
+
+    //  .attr('r', function(d){return (parseInt(d.EngineCylinders) + 2) })
+    //  .attr('transform', 'translate('+margin+', '+margin+')');
+    
+    // Add annotation
+    const makeAnnotations = d3.annotation()
+        .annotations(annotations);
+
+    d3.select('svg')
+      .append('g')
+      //.attr("class", "annotation-group")
+      .call(makeAnnotations);
+    
+    /*
+    // Y Axiss
+    d3.select('svg')
+      .append('g')
+      .attr('transform', 'translate('+margin+','+margin+')')
+      .call(d3.axisLeft(yScale).tickValues([10,20,50,100]).tickFormat(d3.format("~s")));
+    
+    d3.select('svg')
+      .append("text")
+      .attr("transform", "rotate(-90)")
+      .attr("x", -(500/2))
+      .attr("y", 15)
+      .style("text-anchor", "middle")
+      .text("Average Highway MPG");
+
+    // X axis 
+    d3.select('svg')
+      .append('text')
+      .attr('x', 250)
+      .attr('y', 490 )
+      .style("text-anchor", "middle")
+      .text("Average City MPG");
+
+    d3.select('svg')
+      .append('g')
+      .attr('transform', 'translate('+margin+','+(400+margin)+')')
+      .call(d3.axisBottom(xScale).tickValues([10,20,50,100]).tickFormat(d3.format("~s")));
+    */
+    }
+    </script>
+
+</main>
+
+
+</div> 
+</body>
+</html>

@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<script src='https://d3js.org/d3.v5.min.js'></script>
+<script src="https://rawgit.com/susielu/d3-annotation/master/d3-annotation.min.js"></script>
+<head>
+    <title>CS 416 Final Project</title>
+    <meta charset="utf-8">
+    <link rel="stylesheet" href="slideshow.css" media="screen">
+</head>
+<body  onload="init()">
+  <header>
+    <h1>Exploration of Market Share and Fuel Efficiency by Engine Type</h1>
+
+  </header>
+  <nav role="navigation">
+  <ul>
+    <li><a href="index.html"><b>1</b> Introduction</a></li>
+    <li><a href="slide1.html"><b>2</b> Distribution of Fuel Types</a></li>
+    <li><a href="slide2.html"><b>3</b> Distribution of Cylinders</a></li>
+    <li><a href="slide3.html"><b>4</b> Comparison of MPG</a></li>
+   </ul>
+ </nav>
+  
+<main>
+    <h2>Distribution of Cylinders</h2>
+    <p> <br> </p>
+    <aside>Not surprisingly, vehicles with 4,6 or 8 cylinders dominate the market.  
+      Interestingly, there are as many vehicles with 10 or 12 cylinders on the 
+      market as electric vehicles on the market.  
+    </aside>
+    <svg width=500 height=500></svg>
+    <script>
+    async function init() {
+      const data = await d3.csv('https://flunky.github.io/cars2017.csv');
+      console.log(data);
+
+    var data2 = d3.nest()
+                        .key(function(d) {return d.EngineCylinders;})
+                        //.key(function(d) {return d.Fuel;})
+                        .rollup(function(leaves) {return leaves.length; }) 
+                        .entries(data);
+    //console.log(nested_cnt)
+    
+    data2.sort(function(a, b){ return a.key - b.key});
+    console.log(data2);
+
+    //console.log(data2)
+    var margin = 50;
+    var x = d3.scaleBand().domain([0,2,3,4,6,8,10,12]).range([0,400]);
+    var y = d3.scaleLinear().domain([0,60]).range([400,0]);
+
+    // Y Axis
+    d3.select('svg')
+      .append('g')
+      .attr('transform', 'translate('+margin+','+margin+')')
+      .call(d3.axisLeft(y));
+    
+    d3.select('svg')
+      .append("text")
+      .attr("transform", "rotate(-90)")
+      .attr("x", -(500/2))
+      .attr("y", 15)
+      .style("text-anchor", "middle")
+      .text("Number of Cars by Engine Cylinders");
+
+    // X Axis  
+    d3.select('svg')
+      .append('g')
+      .attr('transform', 'translate('+margin+','+(400+margin)+')')
+      .call(d3.axisBottom(x));
+
+    // Annotation Text
+    const annotations = [
+      {
+        note:{
+          label: '4, 6 and 8 cylinder vehicles comprise the largest share of the marekt'
+        },
+        x: 275,
+        y: 180,
+        dx: 90,
+        dy: -50
+      }
+     ];
+
+    // Div for tooltip
+     var div = d3.select('main').append('div')	
+                 .attr("class", "tooltip")				
+                 .style("opacity", 0);
+
+      d3.select('svg')
+        .append('g')
+        .attr('transform', 'translate('+margin+','+margin+')')
+        .selectAll('rect')
+        .data(data2)
+        .enter()
+        .append('rect')
+        .attr('x', function(d,i) {return i*x.bandwidth()})
+        .attr('y', function (d) {return y(d.value)})
+        .attr('width', x.bandwidth())
+        .attr('height', function(d,i) {return 400 - y(d.value)})
+        .style('fill', '#f768a1')
+        .style('fill-opacity', '0.6')
+        .style('stroke', '#f768a1')
+        .on('mouseover', function(d, i){
+            //console.log(d.pct)
+            div.transition()
+               .duration(100)
+               .style('opacity', 1);
+            div.html('<b>Cylinders: </b>' + d.key + '<br>' +
+                     '<b>Number of Cars: </b>' + d.value)
+               .style('left', (d3.event.pageX) + 'px')
+               .style('top', (d3.event.pageY - 25) + 'px');
+        })
+        .on('mousemove', function(d, i){
+            div.transition()
+               .duration(100)
+               .style('opacity', 1);
+            div.html('<b>Cylinders: </b>' + d.key + '<br>' +
+                     '<b>Number of Cars: </b>' + d.value)
+               .style('left', (d3.event.pageX) + 'px')
+               .style('top', (d3.event.pageY - 25) + 'px');
+        })
+        .on('mouseout', function(d, i){
+            div.transition()
+               .duration(100)
+               .style('opacity', 0);
+        });
+      
+      const makeAnnotations = d3.annotation()
+         .annotations(annotations);
+
+    d3.select('svg')
+      .append('g')
+      //.attr("class", "annotation-group")
+      .call(makeAnnotations);
+
+     }
+
+
+    //var s2_summary = Object.assign('Make' = Object.keys(nested_cnt))
+    //console.log(s2_summary)
+  /*
+   var flat_ct = []
+    nested_cnt.forEach(function(Make){
+      make.
+    })
+    */
+
+
+    </script>
+
+</main>
+
+
+</div> 
+</body>
+</html>

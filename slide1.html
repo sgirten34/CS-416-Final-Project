@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<script src='https://d3js.org/d3.v5.min.js'></script>
+<script src="https://rawgit.com/susielu/d3-annotation/master/d3-annotation.min.js"></script>
+<head>
+    <title>CS 416 Final Project</title>
+    <meta charset="utf-8">
+    <link rel="stylesheet" href="slideshow.css" media="screen">
+</head>
+<body onload="init()">
+  <header>
+    <h1>Exploration of Market Share and Fuel Efficiency by Engine Type</h1>
+
+  </header>
+  <nav role="navigation">
+   <ul>
+    <li><a href="index.html"><b>1</b> Introduction</a></li>
+    <li><a href="slide1.html"><b>2</b> Distribution of Fuel Types</a></li>
+    <li><a href="slide2.html"><b>3</b> Distribution of Cylinders</a></li>
+    <li><a href="slide3.html"><b>4</b> Comparison of MPG</a></li>
+   </ul>
+  </nav>
+  
+<main>
+    <h2>Distribution of Fuel Types</h2>
+    <p> <br> </p>
+    <aside>Looking at the distribution of vehicles by engine type shows
+      that the market in 2017 is dominated by gasoline engines.  Electric
+       vehicles only comprise 4.1% of the market.  There is tremendous growth
+       opportunity for electric vehicles to become a larger proportion of vehicles
+       on the road.  
+    </aside>
+    <svg width=500 height=500></svg>
+    <script>
+    //<style> circle {fill: lightblue; stroke: gray;} </style>
+
+    async function init() {
+      const data = await d3.csv('https://flunky.github.io/cars2017.csv');
+      //console.log(data);
+
+      var fuel_col = [];
+      for(var i=0; i<data.length; i++){
+          fuel_col.push(data[i]['Fuel']);
+      }
+      //console.log(fuel_col);
+      total_obs = fuel_col.length
+      //console.log(total_obs)
+
+      const fuel_count = []
+      for(const fuel of fuel_col){
+          fuel_count[fuel] = fuel_count[fuel] ? fuel_count[fuel] + 1 : 1;
+      }
+      //console.log(d3.keys(fuel_count));
+      console.log(d3.values(fuel_count));
+      var fuel_type = d3.keys(fuel_count);
+      var count = d3.values(fuel_count);
+      count = count.sort(function (a, b){ return b - a});
+      //console.log(count)
+
+      const data2 = [];
+      for(const i in count){
+        data2[i] = {
+          cnt: count[i],
+          pct: (count[i] / total_obs)
+        };
+      }
+      //console.log(data2)
+      var margin = 50;
+      var x = d3.scaleBand().domain(['Gasoline', 'Diesel', 'Electricity']).range([0,400]);
+      var y = d3.scaleLinear().domain([0,140]).range([400,0]);
+
+            // Y Axis
+      d3.select('svg')
+        .append('g')
+        .attr('transform', 'translate('+margin+','+margin+')')
+        .call(d3.axisLeft(y));
+      
+      d3.select('svg')
+        .append("text")
+        .attr("transform", "rotate(-90)")
+        .attr("x", -(500/2))
+        .attr("y", 15)
+        .style("text-anchor", "middle")
+        .text("Number of Cars by Fuel Type");
+
+
+
+      // X Axis  
+      d3.select('svg')
+        .append('g')
+        .attr('transform', 'translate('+margin+','+(400+margin)+')')
+        .call(d3.axisBottom(x));
+
+
+     // Annotation text
+     const annotations = [
+      {
+        note:{
+          label: 'Electric vehicles comprise a smaller market share than diesel'
+        },
+        x: 375,
+        y: 430,
+        dx: -50,
+        dy: -100
+      }
+     ];
+    // Div for tooltip
+     var div = d3.select('main').append('div')	
+                .attr("class", "tooltip")				
+                .style("opacity", 0);
+
+      d3.select('svg')
+        .append('g')
+        .attr('transform', 'translate('+margin+','+margin+')')
+        .selectAll('rect')
+        .data(data2)
+        .enter()
+        .append('rect')
+        .attr('x', function(d,i) {return i*x.bandwidth()})
+        .attr('y', function (d) {return y(d.cnt)})
+        .attr('width', x.bandwidth())
+        .attr('height', function(d,i) {return 400 - y(d.cnt)})
+        .style('fill', '#f768a1')
+        .style('fill-opacity', '0.6')
+        .style('stroke', '#f768a1')
+        .on('mouseover', function(d, i){
+            //console.log(d.pct)
+            div.transition()
+               .duration(100)
+               .style('opacity', 1);
+            div.html(d3.format('.1%')(d.pct) + ' Percent of market share')
+               .style('left', (d3.event.pageX) + 'px')
+               .style('top', (d3.event.pageY - 25) + 'px');
+        })
+        .on('mousemove', function(d, i){
+            div.transition()
+               .duration(100)
+               .style('opacity', 1);
+            div.html(d3.format('.1%')(d.pct) + ' Percent of market share')
+               .style('left', (d3.event.pageX) + 'px')
+               .style('top', (d3.event.pageY - 25) + 'px');
+        })
+        .on('mouseout', function(d, i){
+            div.transition()
+               .duration(100)
+               .style('opacity', 0);
+
+        });
+
+      // Add Annotation
+      const makeAnnotations = d3.annotation()
+        .annotations(annotations)
+
+      d3.select('svg')
+        .append('g')
+        .call(makeAnnotations)
+
+    }
+    </script>
+
+</main>
+</body>
+</html>
